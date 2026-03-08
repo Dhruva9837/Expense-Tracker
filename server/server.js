@@ -15,8 +15,10 @@ const { detectOverdue } = require('./services/overdueService');
 const logger = require('./utils/logger');
 const { connectRedis } = require('./services/redisService');
 
-// Initialize BullMQ worker
-require('./workers/reportWorker');
+// Initialize BullMQ worker (skip on Vercel - serverless has no persistent process)
+if (!process.env.VERCEL) {
+  require('./workers/reportWorker');
+}
 
 // Route imports
 const authRoutes = require('./routes/authRoutes');
@@ -60,6 +62,16 @@ app.use(cookieParser());
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// On Vercel: ensure DB/Redis are connected before handling requests (no startServer)
+if (process.env.VERCEL) {
+  const vercelDbReady = connectDB();
+  connectRedis();
+  app.use(async (req, res, next) => {
+    await vercelDbReady;
+    next();
+  });
+}
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -136,6 +148,9 @@ const startServer = async () => {
   }
 };
 
-startServer();
+// On Vercel, export app only; serverless handles requests per-invocation
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 module.exports = app;
