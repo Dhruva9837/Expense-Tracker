@@ -1,0 +1,129 @@
+﻿import React, { useState } from 'react';
+
+const TransactionMenu = ({ onIncome, onExpense }) => {
+  const [menu, setMenu] = useState(false);
+  const [data, setData] = useState([]);
+  const [amount, setAmount] = useState('');
+  const [title, setTitle] = useState('');
+  const [transactionType, setTransactionType] = useState('Expense');
+
+  const toggleButton = () => setMenu(!menu);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!amount || !title) {
+      alert('Amount and title are required');
+      return;
+    }
+
+    const info = {
+      id: Date.now(),
+      amount: Number(amount),
+      title,
+      transactionType,
+    };
+
+    if (transactionType === 'Income') {
+      onIncome(Number(amount));
+    } else {
+      onExpense(Number(amount));
+    }
+
+    setData((prev) => [info, ...prev]);
+    setAmount('');
+    setTitle('');
+    setTransactionType('Expense');
+    setMenu(false);
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col items-center">
+        <button
+          className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 shadow-sm
+            ${menu 
+              ? 'bg-gray-100 text-secondary hover:bg-gray-200' 
+              : 'bg-primary text-white hover:bg-gray-800'}
+          `}
+          onClick={toggleButton}
+        >
+          {menu ? 'Cancel' : 'Add Transaction'}
+        </button>
+
+        {menu && (
+          <div className="w-full mt-4 bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-secondary uppercase ml-1">Title</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Rent, Groceries, etc."
+                  className="p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-accent outline-none text-primary"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-secondary uppercase ml-1">Amount</label>
+                <input
+                  required
+                  type="number"
+                  placeholder="0.00"
+                  className="p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-accent outline-none text-primary"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-secondary uppercase ml-1">Type</label>
+                <select
+                  value={transactionType}
+                  onChange={(e) => setTransactionType(e.target.value)}
+                  className="p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-accent outline-none text-primary appearance-none"
+                >
+                  <option value="Expense">Expense</option>
+                  <option value="Income">Income</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="bg-accent text-white py-3 rounded-xl font-bold hover:bg-blue-600 transition-colors mt-2"
+              >
+                Confirm
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {data.length > 0 && (
+          <h3 className="text-xs font-bold text-secondary uppercase tracking-widest ml-1 mb-1">
+            Recent Transactions
+          </h3>
+        )}
+        {data.map((dt) => (
+          <div 
+            key={dt.id}
+            className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-50 group transition-all hover:bg-gray-50"
+          >
+            <div className="flex flex-col">
+              <span className="font-semibold text-primary">{dt.title}</span>
+              <span className="text-xs text-secondary">{new Date(dt.id).toLocaleDateString()}</span>
+            </div>
+            <div className={`font-bold ${dt.transactionType === 'Expense' ? 'text-expense' : 'text-income'}`}>
+              {dt.transactionType === 'Expense' ? '-' : '+'}${dt.amount.toLocaleString()}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default TransactionMenu;
